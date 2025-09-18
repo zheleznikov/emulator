@@ -31,6 +31,8 @@ ALLOWED_HOSTS = [
     "host.docker.internal",
 ]
 
+CORS_ALLOW_ALL_ORIGINS = True
+
 
 # Application definition
 
@@ -41,10 +43,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    "corsheaders",
     'mit'
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",  # должно быть вверху
+    "django.middleware.common.CommonMiddleware",
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',

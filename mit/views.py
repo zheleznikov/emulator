@@ -1,9 +1,11 @@
+import uuid
 from datetime import datetime, timedelta
 from typing import Iterator
 
 import orjson
 from django.http import StreamingHttpResponse, HttpResponseBadRequest
 from rest_framework.decorators import api_view
+from rest_framework.response import Response
 
 # количество esim
 COUNT = 5  # целевое - 100_000
@@ -201,3 +203,43 @@ def cdr_usages(request, date_str: str):
         yield b"}"
 
     return StreamingHttpResponse(stream_payload(), content_type="application/json")
+
+
+@api_view(["GET"])
+def esim_list(request):
+    count = int(request.GET.get("count", 5))
+    start_activation = datetime(2025, 8, 16, 8, 22, 26)
+
+    results = []
+    for i in range(count):
+        imsi = str(BASE_IMSI + i)
+        iccid = str(BASE_ICCID + i)
+        activation_date = start_activation + timedelta(days=i)
+
+        results.append({
+            "id": str(uuid.uuid4()),
+            "favourite": activation_date.isoformat() + "Z",
+            "imsi": imsi,
+            "alias": f"ESIM-{i+1}",
+            "last_balance": str(BALANCE),
+            "last_balance_at": (activation_date + timedelta(days=30)).isoformat() + "Z",
+            "is_active_now": (i % 2 == 0),  # для разнообразия
+            "current_price": "10.5",
+            "current_gb_estimated": "1.2",
+            "current_network_name": "TestNet",
+            "balance_last_synced": datetime.utcnow().isoformat() + "Z",
+            "smdp": SMDP_SERVER,
+            "activation_code": f"{ACTIVATION_CODE}-{i}",
+            "connection_string": iccid,
+            "was_active_at_least_once": True,
+            "corporate_user_email": f"user{i}@example.com",
+            "corporate_comment": f"Auto-generated eSIM {i+1}"
+        })
+
+    response = {
+        "count": count,
+        "next": "http://example.com",
+        "previous": "http://example.com",
+        "results": results
+    }
+    return Response(response)
